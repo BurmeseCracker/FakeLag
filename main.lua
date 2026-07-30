@@ -1,8 +1,8 @@
 -- main.lua (Main Script Loader)
 
 -- ⚠️ သင့် GitHub ရဲ့ Raw URL များဖြင့် အစားထိုးပါ
-local CORE_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/core.lua"
-local GUI_URL  = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/gui.lua"
+local CORE_URL = "https://raw.githubusercontent.com/BurmeseCracker/FakeLag/refs/heads/main/core.lua"
+local GUI_URL  = "https://raw.githubusercontent.com/BurmeseCracker/FakeLag/refs/heads/main/gui.lua"
 
 -- GitHub မှ Module များကို Fetch လုပ်ယူခြင်း
 local CoreModule = loadstring(game:HttpGet(CORE_URL))()
