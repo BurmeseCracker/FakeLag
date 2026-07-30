@@ -1,4 +1,4 @@
--- main.lua (Main Loader)
+-- main.lua
 local CORE_URL = "https://raw.githubusercontent.com/BurmeseCracker/FakeLag/refs/heads/main/core.lua"
 local GUI_URL  = "https://raw.githubusercontent.com/BurmeseCracker/FakeLag/refs/heads/main/gui.lua"
 
@@ -26,5 +26,5 @@ if type(GuiModule) == "table" and type(GuiModule.Create) == "function" then
 	GuiModule.Create(function()
 		return CoreModule.Toggle()
 	end)
-	print("Ghost Mode Successfully Loaded!")
+	print("Ghost Mode Loaded Successfully!")
 end
