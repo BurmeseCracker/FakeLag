@@ -1,18 +1,34 @@
 -- gui.lua (User Interface)
+local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
 
 local UI = {}
 
 function UI.Create(onToggleCallback)
-	if CoreGui:FindFirstChild("GitHubGhostGui") then
-		CoreGui.GitHubGhostGui:Destroy()
+	-- ၁။ UI အဟောင်းရှိရင် ရှင်းထုတ်မည် (CoreGui သို့မဟုတ် PlayerGui ထဲကပါ စစ်ပေးသည်)
+	local oldUI = CoreGui:FindFirstChild("GitHubGhostGui") or (LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("GitHubGhostGui"))
+	if oldUI then
+		oldUI:Destroy()
 	end
 
+	-- ၂။ ScreenGui ဖန်တီးခြင်း
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = "GitHubGhostGui"
 	ScreenGui.ResetOnSpawn = false
-	ScreenGui.Parent = CoreGui
+	ScreenGui.DisplayOrder = 999999 -- အခြား UI များ၏ အပေါ်ဆုံးတွင် ပေါ်စေရန်
 
+	-- ၃။ Universal Parenting Logic (Executor အားလုံးတွင် မြင်ရစေရန်)
+	if gethui then
+		ScreenGui.Parent = gethui()
+	elseif syn and syn.protect_gui then
+		syn.protect_gui(ScreenGui)
+		ScreenGui.Parent = CoreGui
+	else
+		ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+	end
+
+	-- ၄။ Main Panel Frame
 	local MainFrame = Instance.new("Frame")
 	MainFrame.Name = "MainFrame"
 	MainFrame.Size = UDim2.new(0, 220, 0, 110)
@@ -27,6 +43,7 @@ function UI.Create(onToggleCallback)
 	UICorner.CornerRadius = UDim.new(0, 8)
 	UICorner.Parent = MainFrame
 
+	-- ၅။ UI Title
 	local Title = Instance.new("TextLabel")
 	Title.Name = "Title"
 	Title.Size = UDim2.new(1, 0, 0, 30)
@@ -37,6 +54,7 @@ function UI.Create(onToggleCallback)
 	Title.Font = Enum.Font.SourceSansBold
 	Title.Parent = MainFrame
 
+	-- ၆။ Toggle Button
 	local ToggleButton = Instance.new("TextButton")
 	ToggleButton.Name = "ToggleButton"
 	ToggleButton.Size = UDim2.new(0.85, 0, 0, 45)
@@ -52,6 +70,7 @@ function UI.Create(onToggleCallback)
 	BtnCorner.CornerRadius = UDim.new(0, 6)
 	BtnCorner.Parent = ToggleButton
 
+	-- ၇။ Toggle Logic
 	ToggleButton.MouseButton1Click:Connect(function()
 		if onToggleCallback then
 			local state = onToggleCallback()
