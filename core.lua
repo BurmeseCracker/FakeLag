@@ -15,22 +15,26 @@ function Core.Toggle()
 	local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
 
 	if getgenv().GhostActive then
-		if not Character or not RootPart then 
+		if not Character then 
+			getgenv().GhostActive = false
+			return false 
+		end
+		
+		if not RootPart then 
 			getgenv().GhostActive = false
 			return false 
 		end
 
-		-- Current CFrame ကို မှတ်ထားမည် (Server မှာ ကျန်ခဲ့မည့်နေရာ)
-		local FreezeCFrame = RootPart.CFrame
-
 		ghostConnection = RunService.Heartbeat:Connect(function()
 			if not Character or not Character:Parent or not RootPart or not RootPart:IsDescendantOf(workspace) then
-				if ghostConnection then ghostConnection:Disconnect() end
+				if ghostConnection then 
+					ghostConnection:Disconnect() 
+				end
 				getgenv().GhostActive = false
 				return
 			end
 			
-			-- Server ဆီ Network Position Update မသွားအောင် Velocity နှိမ်ခြင်း
+			-- Assembly Velocity ကို Zero လုပ်ပြီး Desync ဖြစ်စေခြင်း
 			for _, part in ipairs(Character:GetChildren()) do
 				if part:IsA("BasePart") then
 					part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
@@ -38,7 +42,7 @@ function Core.Toggle()
 				end
 			end
 			
-			-- Safe sethiddenproperty Check (Executor ထဲမှာ ရှိမှသာ ခေါ်မည်)
+			-- Executor Compatibility Check
 			if typeof(sethiddenproperty) == "function" then
 				pcall(function()
 					sethiddenproperty(RootPart, "NetworkIsSleeping", true)
