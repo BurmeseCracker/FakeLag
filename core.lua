@@ -20,6 +20,9 @@ function Core.Toggle()
 			return false 
 		end
 
+		-- Current CFrame ကို မှတ်ထားမည် (Server မှာ ကျန်ခဲ့မည့်နေရာ)
+		local FreezeCFrame = RootPart.CFrame
+
 		ghostConnection = RunService.Heartbeat:Connect(function()
 			if not Character or not Character:Parent or not RootPart or not RootPart:IsDescendantOf(workspace) then
 				if ghostConnection then ghostConnection:Disconnect() end
@@ -27,15 +30,19 @@ function Core.Toggle()
 				return
 			end
 			
-			if sethiddenproperty then
-				sethiddenproperty(RootPart, "NetworkIsSleeping", true)
-			end
-			
+			-- Server ဆီ Network Position Update မသွားအောင် Velocity နှိမ်ခြင်း
 			for _, part in ipairs(Character:GetChildren()) do
 				if part:IsA("BasePart") then
-					part.Velocity = Vector3.new(0, 0, 0)
-					part.RotVelocity = Vector3.new(0, 0, 0)
+					part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+					part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
 				end
+			end
+			
+			-- Safe sethiddenproperty Check (Executor ထဲမှာ ရှိမှသာ ခေါ်မည်)
+			if typeof(sethiddenproperty) == "function" then
+				pcall(function()
+					sethiddenproperty(RootPart, "NetworkIsSleeping", true)
+				end)
 			end
 		end)
 	else
@@ -44,8 +51,10 @@ function Core.Toggle()
 			ghostConnection = nil
 		end
 		
-		if RootPart and sethiddenproperty then
-			sethiddenproperty(RootPart, "NetworkIsSleeping", false)
+		if typeof(sethiddenproperty) == "function" and RootPart then
+			pcall(function()
+				sethiddenproperty(RootPart, "NetworkIsSleeping", false)
+			end)
 		end
 	end
 
