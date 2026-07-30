@@ -26,7 +26,7 @@ function Core.Toggle()
 		end
 
 		ghostConnection = RunService.Heartbeat:Connect(function()
-			if not Character or not Character:Parent or not RootPart or not RootPart:IsDescendantOf(workspace) then
+			if not Character or not Character.Parent or not RootPart or not RootPart:IsDescendantOf(workspace) then
 				if ghostConnection then 
 					ghostConnection:Disconnect() 
 				end
@@ -34,7 +34,7 @@ function Core.Toggle()
 				return
 			end
 			
-			-- Assembly Velocity ကို Zero လုပ်ပြီး Desync ဖြစ်စေခြင်း
+			-- Assembly Velocity များကို Zero ပြုလုပ်ခြင်း
 			for _, part in ipairs(Character:GetChildren()) do
 				if part:IsA("BasePart") then
 					part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
@@ -42,7 +42,7 @@ function Core.Toggle()
 				end
 			end
 			
-			-- Executor Compatibility Check
+			-- Safe hidden property call
 			if typeof(sethiddenproperty) == "function" then
 				pcall(function()
 					sethiddenproperty(RootPart, "NetworkIsSleeping", true)
