@@ -1,85 +1,80 @@
--- core.lua (Standalone Test & Auto-Respawn Fix)
+-- True Ghost Desync (No Heartbeat / No Velocity)
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
 
-local Player = Players.LocalPlayer
-local ghostConnection = nil
-getgenv().GhostActive = false
+local SavedCFrame = nil
+getgenv().IsGhostON = false
 
-local Core = {}
+-- UI Setup
+local oldUI = CoreGui:FindFirstChild("DesyncGhostMenu") or LocalPlayer.PlayerGui:FindFirstChild("DesyncGhostMenu")
+if oldUI then oldUI:Destroy() end
 
-local function ClearConnection()
-	if ghostConnection then
-		ghostConnection:Disconnect()
-		ghostConnection = nil
-	end
-end
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "DesyncGhostMenu"
+ScreenGui.ResetOnSpawn = false
+if gethui then ScreenGui.Parent = gethui() else ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
-function Core.Toggle()
-	getgenv().GhostActive = not getgenv().GhostActive
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 190, 0, 100)
+MainFrame.Position = UDim2.new(0.5, -95, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0.85, 0, 0, 45)
+ToggleButton.Position = UDim2.new(0.075, 0, 0.3, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+ToggleButton.Text = "Ghost Lock: OFF"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Font = Enum.Font.SourceSansBold
+ToggleButton.TextSize = 14
+ToggleButton.Parent = MainFrame
+
+-- Toggle Handler
+ToggleButton.MouseButton1Click:Connect(function()
+	getgenv().IsGhostON = not getgenv().IsGhostON
 	
-	if getgenv().GhostActive then
-		print("[GHOST MODE]: Activated (ON)")
+	local Character = LocalPlayer.Character
+	local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+	if not RootPart then return end
+
+	if getgenv().IsGhostON then
+		-- ၁။ မူလနေရာ CFrame ကို မှတ်မည်
+		SavedCFrame = RootPart.CFrame
 		
-		-- ယခင် ချိတ်ဆက်မှုဟောင်းများ ဖျက်မည်
-		ClearConnection()
-
-		-- Loop စတင်ခြင်း
-		ghostConnection = RunService.Heartbeat:Connect(function()
-			local Character = Player.Character
-			local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
-
-			-- Player သေနေချိန် သို့မဟုတ် Respawn ဖြစ်နေချိန် စောင့်ဆိုင်းခြင်း
-			if not Character or not RootPart or not Character:IsDescendantOf(workspace) then
-				return
-			end
-			
-			-- Humanoid သေ မသေ စစ်ဆေးခြင်း
-			local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-			if Humanoid and Humanoid.Health <= 0 then
-				return
-			end
-
-			-- Assembly Velocity ကို Zero လုပ်ပြီး Desync ဖြစ်စေခြင်း
-			for _, part in ipairs(Character:GetChildren()) do
-				if part:IsA("BasePart") then
-					part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-					part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-				end
-			end
-
-			-- Safe sethiddenproperty
-			if typeof(sethiddenproperty) == "function" then
-				pcall(function()
-					sethiddenproperty(RootPart, "NetworkIsSleeping", true)
-				end)
-			end
-		end)
+		-- ၂။ Server ဆီ Position Data မသွားအောင် Network ရပ်မည်
+		if typeof(sethiddenproperty) == "function" then
+			pcall(function()
+				sethiddenproperty(RootPart, "NetworkIsSleeping", true)
+			end)
+		end
+		
+		ToggleButton.Text = "Ghost Lock: ON"
+		ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 180, 80)
+		print("[GHOST]: ON - Server-side Position Frozen!")
 	else
-		print("[GHOST MODE]: Deactivated (OFF)")
-		ClearConnection()
-
-		local Character = Player.Character
-		local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
-		if typeof(sethiddenproperty) == "function" and RootPart then
+		-- ၃။ OFF လိုက်ပါက မူလ CFrame သို့ ပြန်ပို့မည်
+		if SavedCFrame then
+			RootPart.CFrame = SavedCFrame
+			SavedCFrame = nil
+		end
+		
+		-- ၄။ Network ပြန်ဖွင့်မည်
+		if typeof(sethiddenproperty) == "function" then
 			pcall(function()
 				sethiddenproperty(RootPart, "NetworkIsSleeping", false)
 			end)
 		end
-	end
-
-	return getgenv().GhostActive
-end
-
--- Player Respawn ဖြစ်သွားရင် Connection ကို မပျက်စေဘဲ Auto Reset လုပ်ပေးခြင်း
-Player.CharacterAdded:Connect(function()
-	if getgenv().GhostActive then
-		print("[GHOST MODE]: Player Respawned - Auto Re-applying Ghost Mode")
-		ClearConnection()
-		task.wait(1) -- Character အသစ်သေချာ Load ဖြစ်သည်အထိ စောင့်မည်
-		Core.Toggle() -- Switch Off & On
-		Core.Toggle()
+		
+		ToggleButton.Text = "Ghost Lock: OFF"
+		ToggleButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+		print("[GHOST]: OFF - Returned to Original Position!")
 	end
 end)
-
-return Core
